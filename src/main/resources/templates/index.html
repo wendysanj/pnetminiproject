@@ -1,0 +1,258 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Getting Started: Serving Web Content</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+
+<body>
+    <p th:text="'Hello, '" /> &nbsp; <input type="text" id="fname" name="fname" value="" placeholder="User">
+    </p></br>
+
+
+    <button id="1" type="button">View</button>
+    <button id="2" type="button">Save</button>
+    <button id="3" type="button">CHKSUM</button>
+
+    </br>
+
+    <form name="ajaxform" id="ajaxform" method="POST">
+        </br></br>
+        <table id="table1" align="left">
+            <tr>
+                <td colspan="2"><b>Add Data Here!</b></td>
+            </tr>
+        </table>
+        </br></br>
+        <table id="table2" align="left" border="1">
+            <tr>
+                <td><label for="alpha2Code">Country ID</label></td>
+                <td><label for="name">name</label></td>
+                <td><label for="capital">capital</label></td>
+                <td><label for="region">region</label></td>
+                <td><label for="subregion">subregion</label></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="alpha2Code" name="alpha2Code" placeholder="Country ID"> </td>
+                <td><input type="text" id="name" name="name" value="" /></td>
+                <td><input type="text" id="capital" name="capital" value="" /></td>
+                <td><input type="text" id="region" name="region" value="" /></td>
+                <td><input type="text" id="subregion" name="subregion" value="" /></td>
+            </tr>
+        </table>
+    </form>
+    </br>
+    <table id="table" align="left" border="1"></table>
+    </br>
+
+
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"
+        integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/table-to-json@1.0.0/lib/jquery.tabletojson.min.js"
+        integrity="sha256-H8xrCe0tZFi/C2CgxkmiGksqVaxhW0PFcUKZJZo1yNU=" crossorigin="anonymous"></script>
+
+
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: "/countrySEAsia"
+            }).done(function (data) {
+                console.log(data);
+                var button3 = document.getElementById("3");
+                button3.style.display = "none";
+                // DATA ONLY NEED TO APPEAR IN CONSOLE.
+
+                $(function () {
+                    $("#1").click(function (e) {
+                        e.preventDefault();
+                        var Parent = document.getElementById("table");
+
+                        while (Parent.hasChildNodes()) {
+                            Parent.removeChild(Parent.firstChild);
+                        }
+
+                        var table1 = document.getElementById("table1");
+                        table1.style.display = "none";
+                        var table2 = document.getElementById("table2");
+                        table2.style.display = "none";
+                        var button2 = document.getElementById("2");
+                        button2.style.display = "none";
+
+                        // Getting the all column names 
+                        var selector = '#table';
+                        var cols = Headers(data, selector);
+                        // Traversing the JSON data 
+                        for (var i = 0; i < data.length; i++) {
+                            var row = $('<tr/>');
+                            for (var colIndex = 0; colIndex < cols.length; colIndex++) {
+                                var val = data[i][cols[colIndex]];
+                                // If there is any key, which is matching with the column name 
+                                if (val == null) val = "";
+                                row.append($('<td/>').html(val));
+                            }
+                            $(selector).append(row);
+                        }
+                    });
+                });
+
+                function Headers(list, selector) {
+
+                    var columns = [];
+                    var header = $('<tr/>');
+
+                    for (var i = 0; i < list.length; i++) {
+                        var row = list[i];
+                        for (var k in row) {
+                            if ($.inArray(k, columns) == -1) {
+                                columns.push(k);
+                                header.append($('<th/>').html(k));
+                            }
+                        }
+                    }
+
+                    $(selector).append(header);
+                    return columns;
+                }
+
+            });
+
+            $("#2").click(function () {
+
+                if ($('#fname').val() == '') { alert('User required'); }
+                $.ajax({
+                    url: "/countrySEAsia" + "/enc",
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ "user": $('#fname').val() }),
+                    //data: $('#fname').val(),
+                    success: function (data) {
+                        console.log(data);
+                        postData(data);
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        console.log(textStatus);
+                        console.log(errorThrown);
+                        console.log('Error in Operation');
+                    }
+                });
+            });
+
+
+            function postData(user) {
+                // Creating a XHR object 
+                let xhr = new XMLHttpRequest();
+                let url = "/countrySEAsia" + "?user=" + user.value;
+                xhr.open("POST", url, true);
+
+                xhr.setRequestHeader("Content-Type", "application/json");
+
+                // Create a state change callback 
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        result.innerHTML = this.responseText;
+                    }
+                };
+
+                // Converting JSON data to string 
+                var data = JSON.stringify({
+                    "alpha2Code": $('#alpha2Code').val(),
+                    "name": $('#name').val(),
+                    "capital": $('#capital').val(),
+                    "region": $('#region').val(),
+                    "subregion": $('#subregion').val()
+                });
+               
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: data,
+                    contentType: 'application/json',
+                    success: function (data) {
+                        console.log(data);
+                        var button3 = document.getElementById("3");
+                        button3.style.display = "inline";
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        console.log(xhr);
+                        console.log(xhr.responseText);
+                        alert(xhr.responseText);
+                        console.log(data);
+                        console.log(textStatus);
+                        console.log(errorThrown);
+                        console.log('Error in Operation');
+                    }
+                });
+
+                var button1 = document.getElementById("1");
+                button1.style.display = "none";
+  
+            }
+        });
+
+
+        $(function () {
+            $("#3").click(function (e) {
+
+                $.ajax({
+                    url: "/countrySEAsia" + "/enc",
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ "user": $('#fname').val() }),
+                    success: function (data) {
+                        console.log(data);
+                        checksum(data);
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        console.log(textStatus);
+                        console.log(errorThrown);
+                        console.log('Error in Operation');
+                    }
+                });
+            });
+        });
+
+        function checksum(user) {
+                // Creating a XHR object 
+                let xhr = new XMLHttpRequest();
+                let url = "/countrySEAsia" +"/chksum"+ "?user=" + user.value;
+       
+ 
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: '',
+                    success: function (data) {
+                        console.log(data);
+                        alert("CHKSUM SUCCESS:"+data);
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        console.log(xhr);
+                        console.log(xhr.responseText);
+                        alert("CHKSUM FAILED:"+xhr.responseText);
+                        console.log(data);
+                        console.log(textStatus);
+                        console.log(errorThrown);
+                        console.log('Error in Operation');
+                    }
+                });
+
+                var button2 = document.getElementById("2");
+                button2.style.display = "none";
+                var button3 = document.getElementById("3");
+                button3.style.display = "none";
+                var table1 = document.getElementById("table1");
+                table1.style.display = "none";
+                var table2 = document.getElementById("table2");
+                table2.style.display = "none";
+            }
+    </script>
+
+</body>
+
+</html>
